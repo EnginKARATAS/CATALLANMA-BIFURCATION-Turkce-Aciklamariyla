@@ -1,0 +1,135 @@
+2 koddan oluşmakta farklı sayfalarda aynı konumda kaydedin 
+1
+---------------------------------------
+function bif_diag = LogisticBifurcationDiagram2(M, N, r1, r2, x1, x2, kalite)
+if nargin < 7
+    kalite = 10;
+end
+if nargin < 6
+    x2 = 1;
+    x1 = 0;
+end
+if nargin < 4
+    r1 = 2.4;
+    r2 = 3.999;
+end
+if nargin < 2
+    N = 800;
+    M = 500;
+end
+ 
+if kalite < 1
+    kalite = 1;
+end
+ 
+xasagi = x1;
+xyukari = x2;
+ 
+% r ve x değerlerini image`leriz
+%linespace metlaba ait bir koddur ve eşit vektörler yaratmaya yarar
+r_yon = linspace(r1, r2, N);
+x_yon = linspace(xasagi-1/M,xyukari+1/M,M+2);
+ 
+% Oluşacak matrisin çerçevesini yazarız
+bif_diag = zeros(M,N);
+ 
+% Geçici olmayan dinamiklerin uzunluğu
+xxuzunlugu = kalite*100;
+ 
+h = waitbar(0, 'imaj yükleniyor');
+for k=2:N-1
+    
+  % R'deki piksel için r-dr / 2'den r + dr / 2'ye r değerleri hesapladık
+    r1 = 0.5*(r_yon(k) + r_yon(k-1));
+    r2 = 0.5*(r_yon(k) + r_yon(k+1));
+    dr = (r2-r1)/(kalite);
+    
+    % x, Cobweb2 kullanılarak hesaplanan tüm nonlineer x değerlerini saklar
+    x = zeros(length(r1:dr:r2)*xxuzunlugu, 1);
+    indx = 0;
+    for r=r1:dr:r2
+        xx = Cobweb2(r,.25, 1.05*xxuzunlugu + 1000, 1000 + 0.05*xxuzunlugu);
+        %boyut(xx)
+        x(indx*xxuzunlugu + 1:(indx+1)*xxuzunlugu) = xx;
+        indx = indx + 1;
+    end
+    
+    %Her pikseli ne sıklıkta ziyaret ettiğimizin normalleştirilmiş histogramı
+    hx2 = hist(x,x_yon);
+    hx2 = hx2(2:end-1);
+    hx2 = hx2/max(hx2);
+    
+    bif_diag(:,k) = hx2;     
+        h = waitbar(k/N, h, sprintf('calculating image: %2.0f %% done', 100*k/N));
+end
+h = waitbar(1, h, 'finished');
+delete(h)
+fprintf('\n')
+clf
+imagesc(bif_diag(end:-1:1,:))
+ 
+set(gcf,'position',[30 30 N+100 M+100]);
+ 
+xsayaci = linspace(r_yon(1),r_yon(end),9);
+xsayaci = round(100*xsayaci)/100;
+ysayaci = linspace(xasagi,xyukari,5);
+ysayaci = round(100*ysayaci)/100;
+xetiket = strcat(num2str(xsayaci(1)),'|',num2str(xsayaci(2)),'|',num2str(xsayaci(3)),'|',num2str(xsayaci(4)),'|',num2str(xsayaci(5)),'|',num2str(xsayaci(6)),'|',num2str(xsayaci(7)),'|',num2str(xsayaci(8)),'|',num2str(xsayaci(9)));
+yetiket = strcat(num2str(ysayaci(5)),'|',num2str(ysayaci(4)),'|',num2str(ysayaci(3)),'|',num2str(ysayaci(2)),'|',num2str(ysayaci(1)));
+set(gca,'position',[80/(N+100) 80/(M+100) N/(N+100) M/(M+100)],'xtick',linspace(0.5,N+.5,9),'ytick',linspace(0.5,M+.5,5),'xticklabel',xetiket,'yticklabel',yetiket,'fontsize',18,'fontname','times','linewidth',1.5,'tickdir','out')
+ 
+caxis([0 0.7])
+ 
+xlabel('r','fontsize',18,'fontname','times');
+ylabel('x','fontsize',18,'fontname','times');
+ 
+%cmap = gray;
+cmap(1,:) = [1 1 1];
+for j = 2:64
+    v = ((64-j)/64)^3;
+    cmap(j,:) = [v v v];
+end
+colormap(cmap)
+-----------------------------------
+2
+--------------------------------
+function x = Cobweb2(r,x0, LIMIT, TRANSIENT)
+
+x1 = r*x0*(1 - x0);
+
+x = zeros(LIMIT - TRANSIENT - 1, 1);
+%count = 0;
+idx = 0;
+%while count < LIMIT
+for count = 1:LIMIT
+    %count = count + 1;
+    
+    x0 = x1;
+    x1 = r*x0*(1-x0);    
+    
+    if count > TRANSIENT
+        idx = idx + 1;
+        x(idx) = x1;
+    end
+    
+end
+------------------function x = Cobweb2(r,x0, LIMIT, TRANSIENT)
+
+x1 = r*x0*(1 - x0);
+
+x = zeros(LIMIT - TRANSIENT - 1, 1);
+%count = 0;
+idx = 0;
+%while count < LIMIT
+for count = 1:LIMIT
+    %count = count + 1;
+    
+    x0 = x1;
+    x1 = r*x0*(1-x0);    
+    
+    if count > TRANSIENT
+        idx = idx + 1;
+        x(idx) = x1;
+    end
+    
+end--------------
